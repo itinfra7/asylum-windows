@@ -896,16 +896,16 @@ void vduread(asylum_options options)
         }
 
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
-        SDL_RenderSetLogicalSize(Renderer, vduvar.xreso, vduvar.yreso);
+        SDL_RenderSetLogicalSize(Renderer, vduvar.width, vduvar.height);
 
-        if ((ArcScreen != NULL) && ((ArcScreen->w != vduvar.xreso) || (ArcScreen->h != vduvar.yreso)))
+        if ((ArcScreen != NULL) && ((ArcScreen->w != vduvar.width) || (ArcScreen->h != vduvar.height)))
         {
             SDL_FreeSurface(ArcScreen);
             ArcScreen = NULL;
         }
         if (ArcScreen == NULL)
         {
-            ArcScreen = SDL_CreateRGBSurface(0, vduvar.xreso, vduvar.yreso, 32, 0xff, 0xff00, 0xff0000, 0);
+            ArcScreen = SDL_CreateRGBSurface(0, vduvar.width, vduvar.height, 32, 0xff, 0xff00, 0xff0000, 0);
             if (ArcScreen == NULL)
             {
                 printf("Failed to create surface: %s\n", SDL_GetError());
@@ -917,7 +917,7 @@ void vduread(asylum_options options)
         {
             int tw, th, res;
             res = SDL_QueryTexture(WindowTexture, NULL, NULL, &tw, &th);
-            if ((res < 0) || (tw != vduvar.xreso) || (th != vduvar.yreso))
+            if ((res < 0) || (tw != vduvar.width) || (th != vduvar.height))
             {
                 SDL_DestroyTexture(WindowTexture);
                 WindowTexture = NULL;
@@ -925,7 +925,7 @@ void vduread(asylum_options options)
         }
         if (WindowTexture == NULL)
         {
-            WindowTexture = SDL_CreateTexture(Renderer, ArcScreen->format->format, SDL_TEXTUREACCESS_STREAMING, vduvar.xreso, vduvar.yreso);
+            WindowTexture = SDL_CreateTexture(Renderer, ArcScreen->format->format, SDL_TEXTUREACCESS_STREAMING, vduvar.width, vduvar.height);
             if (WindowTexture == NULL)
             {
                 printf("Failed to create texture: %s\n", SDL_GetError());
@@ -1038,7 +1038,7 @@ void startmessage()
 
 void deathmessage()
 {
-    message(vduvar.gamex+vduvar.gamew/2-88, vduvar.gamey+vduvar.gameh+8, 0, -1, "¤ Snuffed It! ¤");
+    message(vduvar.gamex+vduvar.gamew/2-88, vduvar.gamey+vduvar.gameh+8, 0, -1, "ï¿½ Snuffed It! ï¿½");
 }
 
 void endgamemessage()
