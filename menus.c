@@ -32,7 +32,7 @@ int escapehandler()
     showchatscreen();
     swi_fastspr_clearwindow();
     wipetexttab();
-    message(36, 40-256, 0, 4, "¤ Game Interrupted ¤");
+    message(36, 40-256, 0, 4, "ï¿½ Game Interrupted ï¿½");
     message(32-256, 72, 4, 0, "Please select action");
     message(46+256, 104, -4, 0, "ESC - Abandon game");
     message(40-256, 136, 4, 0, "Q    - lose this life");
@@ -434,19 +434,20 @@ void tunespeed()
             if (options.fullscreen == 1) speed1[0] = 16;
             else speed1[0] = 17;
             if (options.opengl == 1) speed2[0] = 16;
-            else
-            speed2[0] = 17;
+            else speed2[0] = 17;
             if (options.scale == 2) speed3[0] = 16;
             else speed3[0] = 17;
             message(96, 48, 0, 0, "Tune Video");
             message(32, 96, 0, 0, speed1);
             message(32, 120, 0, 0, speed2);
-	    if (options.opengl)
-	    {
-		message(32, 144, 0, 0, sizedesc[options.size&3]);
-		message(32, 168, 0, 0, speed3);
-		message(80, 188, 0, 0, "-experimental-");
-	    }
+#if !defined(_WIN32)
+        if (options.opengl)
+        {
+        message(32, 144, 0, 0, sizedesc[options.size&3]);
+        message(32, 168, 0, 0, speed3);
+        message(80, 188, 0, 0, "-experimental-");
+        }
+#endif
             message(96, 220, 0, 0, "ESC - Exit");
 
             swi_blitz_wait(0);
@@ -461,17 +462,24 @@ void tunespeed()
             }
             else if (r0 == 2)
             {
+#if defined(_WIN32)
+                options.opengl = 0;
+                options.scale = 1;
+                vduread(options);
+                break;
+#else
                 options.opengl ^= 1;
-		if (options.opengl == 0)
-		{
-		    options.size = 0;
-		    options.scale = 1;
-		}
-		vduread(options);
-		getvitalfiles();
-		getgamefiles();
-		getlevelsprites();
-		break;
+        if (options.opengl == 0)
+        {
+            options.size = 0;
+            options.scale = 1;
+        }
+        vduread(options);
+        getvitalfiles();
+        getgamefiles();
+        getlevelsprites();
+        break;
+#endif
             }
 	    else if (options.opengl == 0);
             else if (r0 == 3)

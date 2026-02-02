@@ -295,6 +295,10 @@ void setdefaults()
     options.fullscreen = 1;
     options.opengl = 0;
     options.size = 0; // 320 x 256
+#elif defined(_WIN32)
+    options.fullscreen = 0;
+    options.opengl = 0;
+    options.size = 1; // 640 x 512
 #else
     options.fullscreen = 0;
     options.opengl = 1;
@@ -753,6 +757,10 @@ void loadconfig()
         }
         fclose(r0);
     }
+#if defined(_WIN32)
+    options.opengl = 0;
+    options.scale = 1;
+#endif
    //findoutid:;
     if (!options.idpermit) if (options.mentalzone > 2) options.mentalzone = 2;
     //int idp=swi_osfile(5,options.idpermitpath,NULL,NULL);
@@ -777,6 +785,11 @@ void saveconfig()
             config_keywords[7], 1,
             config_keywords[8], 0,
             config_keywords[9], 0,
+            config_keywords[10], 1,
+#elif defined(_WIN32)
+            config_keywords[7], options.fullscreen,
+            config_keywords[8], 0,
+            config_keywords[9], options.size,
             config_keywords[10], 1,
 #else
             config_keywords[7], options.fullscreen,
