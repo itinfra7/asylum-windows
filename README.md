@@ -1,33 +1,113 @@
-# SDL Asylum
+젊은 시그문트에게는 몇 가지 문제가 있습니다. 그의 정신적 불안정을 해결하도록 돕기 위해,
+당신은 그의 내면 세계로 들어가 오작동하는 뇌세포들을 차단해야 합니다.
 
-<i>Young Sigmund has a few problems. To help him resolve his mental instability you must enter the surreal world of his inner mind and shut down the malfunctioning brain cells which are causing him these problems.</i> — Instructions file from original game
+SDL Asylum (Windows 포팅)
+========================
 
-SDL Asylum is a C port of the computer game Asylum, which was written by Andy Southgate in 1994 for the Acorn Archimedes and is now public domain. It should be possible to run it on any platform which support SDL and OpenGL graphics. It's developed primarily on Linux but has also been built successfully on Cygwin, FreeBSD, Windows and Haiku.
+SDL Asylum은 1994년에 Andy Southgate가 Acorn Archimedes용으로 만든 Asylum을 C로
+포팅한 게임입니다. 원본은 공개 도메인이며, 이 포크는 Windows 친화적인 빌드와
+포터블 배포에 집중합니다.
 
-This fork contains port to SDL2, bug fixes and DragonBox Pyra/Pandora specific functionality.
+프로젝트 개요
+=============
+- 대상: Windows 10/11 x64
+- 배포: 포터블 zip (압축 해제 후 실행)
+- 렌더링: Windows에서는 기본적으로 SDL2 소프트웨어 렌더 경로 사용
 
+실행
+====
+배포 zip을 풀고 asylum.exe를 실행하면 됩니다.
 
-##Instructions
+게임 방법
+=========
+움직이는 것을 쏘고, 움직이지 않는 것을 모으며, 거대한 맵 곳곳에 있는 8개의
+신경세포를 찾아 활성화하는 것이 목표입니다. 기본 키는 Z, X, 세미콜론, 마침표로
+이동하고 Enter로 발사합니다. 키는 변경 가능합니다.
 
-<i>Well, you don't really need any instructions to play the game. Just remember, the object is to find things that look like brain cells and shut them down! Good luck!</i> — Instructions file from original game
+텔레포터는 첫 레벨(Ego)에서 촛대처럼 보입니다. 가운데에 서서 “아래” 키(기본은
+마침표)를 누르면 이동합니다.
 
-The game revolves around shooting anything which moves, collecting anything which doesn't move, and, most importantly, finding your way to each of the eight pulsating neurons scattered through the immense map. Use ‘Z’, ‘X’, ‘;’ and ‘.’ to move and ‘Enter’ to fire, or remap the keys to something you like better.
+원본 게임 안내는 Instruct 파일을 참고하세요.
 
-The one game feature which does merit explicit instruction is teleporting. In the first level (“Ego”) the teleporters look like candelabra. To use a teleporter, stand in its centre and press “down” (that's ‘.’ with the default key settings).
+빌드 (Windows, MSYS2 + MinGW64)
+===============================
+1) MSYS2를 설치하고 MinGW64 셸을 실행합니다.
+2) 툴체인 및 의존성 설치:
+	pacman -Syu
+	pacman -S --needed mingw-w64-x86_64-toolchain mingw-w64-x86_64-SDL2 mingw-w64-x86_64-SDL2_mixer mingw-w64-x86_64-mesa
+3) 저장소 루트에서 빌드:
+	mingw32-make HOST=mingw INSTALLRESOURCEPATH=./data INSTALLHISCORES=./hiscores
 
+빌드 결과물은 저장소 루트의 asylum.exe입니다. data, hiscores 폴더와 필요한 DLL을
+함께 배포해야 합니다.
 
-##Credits
+라이선스
+=========
+SDL Asylum은 GPL v3로 배포됩니다. 원본 게임의 음악과 그래픽은 © Andy Southgate
+1993이며, 공개 도메인으로 제공됩니다.
 
-SDL Asylum wouldn't have happened at all without Andy Southgate, who wrote the original game and later generously made it public domain. Nor without Jeffrey Lee and John Hoare, who got hold of Andy's original assembly source and hosted it on their marvellous Asylum tribute site at acornarcade.com.
+웹사이트
+========
+http://sdl-asylum.sourceforge.net/  
+https://github.com/M-HT/asylum
 
-SDL Asylum wouldn't be as good without the ports, packages and patches provided by: Dmitry Marakasov, Ian Chapman, James Woodcock, Peter De Wachter.
+-------------------------------------------------------------------------------
 
+Young Sigmund has a few problems. To help him resolve his mental instability
+you must enter the surreal world of his inner mind and shut down the
+malfunctioning brain cells which are causing him these problems.
 
-##Licensing
+SDL Asylum (Windows Port)
+==========================
 
-SDL Asylum is distributed under GPL version 3.  The original game music and graphics are © Andy Southgate 1993, and have been placed in the public domain by Andy Southgate.
+SDL Asylum is a C port of the computer game Asylum, which was written by Andy
+Southgate in 1994 for the Acorn Archimedes and is now public domain. This fork
+focuses on a Windows-friendly build and portable distribution.
 
+Project overview
+================
+- Target: Windows 10/11 x64
+- Packaging: portable zip (extract and run)
+- Rendering: SDL2 software path by default on Windows
 
-##Original Web site
+Running
+=======
+Extract the distribution zip and run asylum.exe.
 
-http://sdl-asylum.sourceforge.net/
+Instructions
+============
+The game revolves around shooting anything which moves, collecting anything
+which doesn't move, and, most importantly, finding your way to each of the
+eight pulsating neurons scattered throughout the immense map. Use Z, X,
+semicolon and period to move and Enter to fire, or remap the keys to something
+you like better.
+
+The one game feature which does merit explicit instruction is teleporting.
+In the first level (Ego) the teleporters look like candelabra. To use a
+teleporter, stand in its centre and press down (that is the period key with
+the default key settings).
+
+See the file Instruct for the original game instructions.
+
+Build (Windows, MSYS2 + MinGW64)
+================================
+1) Install MSYS2 and open the MinGW64 shell.
+2) Install toolchain and dependencies:
+	pacman -Syu
+	pacman -S --needed mingw-w64-x86_64-toolchain mingw-w64-x86_64-SDL2 mingw-w64-x86_64-SDL2_mixer mingw-w64-x86_64-mesa
+3) Build from the repo root:
+	mingw32-make HOST=mingw INSTALLRESOURCEPATH=./data INSTALLHISCORES=./hiscores
+
+The build output is asylum.exe in the repository root. Distribute it together
+with the data and hiscores folders plus required DLLs.
+
+Licensing
+=========
+SDL Asylum is distributed under GPL version 3. The original game music and
+graphics are © Andy Southgate 1993, and have been placed in the public domain
+by Andy Southgate.
+
+Web site
+========
+http://sdl-asylum.sourceforge.net/  
+https://github.com/M-HT/asylum

@@ -1,0 +1,5 @@
+dist/
+asylum.exe
+*.zip
+SHA256SUMS.txt
+md/
