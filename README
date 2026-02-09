@@ -1,0 +1,65 @@
+Asylum Windows
+==========
+
+Young Sigmund has a few problems. To help him resolve his mental instability
+you must enter the surreal world of his inner mind and shut down the
+malfunctioning brain cells. 
+
+SDL Asylum is a C port of the computer game Asylum, which was written by Andy
+Southgate in 1994 for the Acorn Archimedes and is now public domain. This fork
+targets Windows only and runs on SDL2 with optional OpenGL rendering.
+
+Fork and maintenance
+====================
+
+Maintainer: itinfra7
+Upstream forked from: https://github.com/M-HT/asylum
+
+Building and running (Windows)
+===============================
+
+This workspace includes a Windows build using MSYS2 MinGW64. From an MSYS2
+MinGW64 shell:
+
+	make HOST=mingw
+
+The built binary is asylum.exe. For a runnable folder, place asylum.exe next
+to the required SDL2 DLLs and the data/ and hiscores/ directories. A ready-to-run
+layout is typically produced under the dist/ folder.
+
+Windows-specific differences
+============================
+
+- Save/config files are stored in a local save/ directory alongside asylum.exe
+	(created automatically if missing).
+- Key binding prompts use "Press Key to Jump" for the up action, and the order
+	is Left, Right, Down, Fire, Jump.
+- Key binding input is debounced to avoid repeated captures on fast machines.
+
+Instructions
+============
+
+The game revolves around shooting anything which moves, collecting anything
+which doesn't move, and, most importantly, finding your way to each of the
+eight pulsating neurons scattered throughout the immense map.  Use 'Z', 'X',
+';' and '.' to move and 'Enter' to fire, or remap the keys to something you
+like better.
+
+The one game feature which does merit explicit instruction is teleporting.
+In the first level ("Ego") the teleporters look like candelabra.  To use a
+teleporter, stand in its centre and press "down" (that's '.' with the
+default key settings.)
+
+See the file 'Instruct' for the instructions included with the original game.
+
+Licensing
+=========
+
+SDL Asylum is distributed under GPL version 3.  The original game music
+and graphics are � Andy Southgate 1993, and have been placed in the public
+domain by Andy Southgate.
+
+Web site
+========
+
+http://sdl-asylum.sourceforge.net/
