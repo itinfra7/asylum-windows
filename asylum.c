@@ -306,6 +306,7 @@ void setdefaults()
     options.initials[0] = 'P';
     options.initials[1] = 'S';
     options.initials[2] = 'Y';
+    options.language = 0;
 }
 
 void soundupdate()
@@ -500,6 +501,7 @@ void c_array_initializers()
 {
     init_projsplittab(); init_rocketbursttab(); init_alspintab(); init_rockettab();
     init_palette(); init_splittab();
+    init_ttf();
     load_voices(0);
     init_keyboard();
 }
@@ -698,11 +700,11 @@ int getneuronfiles(int plzone)
     return plzone;
 }
 
-char config_keywords[16][12] =
+char config_keywords[17][12] =
 { "LeftKeysym",    "RightKeysym", "UpKeysym",   "DownKeysym", "FireKeysym",
   "SoundType",   "SoundQ",      "FullScreen",
   "OpenGL", "ScreenSize", "ScreenScale",
-  "SoundVolume", "MusicVolume", "MentalZone", "Initials",   "You" };
+    "SoundVolume", "MusicVolume", "MentalZone", "Language", "Initials",   "You" };
 
 char idpermitstring[] = "You are now permitted to play the ID!!!\n";
 
@@ -718,17 +720,17 @@ void loadconfig()
         while (fscanf(r0, " %12s", keyword) != EOF)
         {
             int i;
-            for (i = 0; i < 16; i++)
+            for (i = 0; i < 17; i++)
                 if (!strncmp(keyword, config_keywords[i], 12)) break;
-            if (i == 14)
+            if (i == 15)
             {
                 fscanf(r0, " %3c", options.initials); continue;
             }
-            if (i == 15)
+            if (i == 16)
             {
                 options.idpermit = 1; break;
             }                       // end of file
-            if (i == 16) break;     // parsing failed
+            if (i == 17) break;     // parsing failed
             int temp;
             fscanf(r0, " %i", &temp);
             switch (i)
@@ -749,6 +751,7 @@ void loadconfig()
             case 11: options.soundvol = temp; break;
             case 12: options.musicvol = temp; break;
             case 13: options.mentalzone = temp; break;
+            case 14: options.language = temp; break;
             }
         }
         fclose(r0);
@@ -765,7 +768,7 @@ void saveconfig()
     if (r0 == NULL) return;
 //swi_osgbpb(1, /* write bytes to pointer R4 */
 //r0,&savestart,&saveend,0);
-    fprintf(r0, "%s %i\n%s %i\n%s %i\n%s %i\n%s %i\n%s %i\n%s %i\n%s %i\n%s %i\n%s %i\n%s %i\n%s %i\n%s %i\n%s %c%c%c\n%s",
+    fprintf(r0, "%s %i\n%s %i\n%s %i\n%s %i\n%s %i\n%s %i\n%s %i\n%s %i\n%s %i\n%s %i\n%s %i\n%s %i\n%s %i\n%s %i\n%s %c%c%c\n%s",
             config_keywords[0], -options.leftkey,
             config_keywords[1], -options.rightkey,
             config_keywords[2], -options.upkey,
@@ -787,7 +790,8 @@ void saveconfig()
             config_keywords[11], options.soundvol,
             config_keywords[12], options.musicvol,
             config_keywords[13], options.mentalzone,
-            config_keywords[14], options.initials[0],
+            config_keywords[14], options.language,
+            config_keywords[15], options.initials[0],
 	                         options.initials[1],
 	                         options.initials[2],
             ((options.idpermit == 1) ? idpermitstring : ""));

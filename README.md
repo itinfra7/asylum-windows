@@ -18,13 +18,20 @@ Use MSYS2 MinGW64:
 - Build: make HOST=mingw
 - Run: place asylum.exe next to the required SDL2 DLLs and the data/ and hiscores/ directories
 
+Requires SDL2_ttf for Unicode text rendering.
+
 ## Windows-specific differences
+
+Version: 1.1
 
 - Save/config files are stored in a local save/ directory alongside asylum.exe
 	(created automatically if missing).
 - Key binding prompts use "Press Key to Jump" for the up action, and the order
 	is Left, Right, Down, Fire, Jump.
 - Key binding input is debounced to avoid repeated captures on fast machines.
+- Main menu includes a Language option (English/한국어/Deutsch/Español/简体中文).
+	Non-ASCII text uses TrueType fonts; the game tries data/Resources/Fonts/
+	and common Windows fonts (Malgun, Microsoft YaHei, SimHei, SimSun).
 
 ## Instructions
 

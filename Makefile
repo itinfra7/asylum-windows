@@ -11,7 +11,7 @@ CFLAGS= -O3 -Wall
 COPTS=  $(CFLAGS) -funsigned-char \
 	-DRESOURCEPATH=\"$(INSTALLRESOURCEPATH)\" \
 	-DSCOREPATH=\"$(INSTALLHISCORES)\"
-LIBS= -lm -lSDL2 -lSDL2_mixer -lGL -lGLU
+LIBS= -lm -lSDL2 -lSDL2_mixer -lSDL2_ttf -lGL -lGLU
 
 ifeq "$(TARGET)" "pandora"
 	CC=pandora-g++
@@ -22,7 +22,7 @@ ifeq "$(TARGET)" "pyra"
 	COPTS+=-march=armv7ve+simd -mcpu=cortex-a15 -mtune=cortex-a15 -mfpu=neon-vfpv4 -mfloat-abi=hard -mthumb -DPYRA
 endif
 
-SRCS= alien.c asylum.c bullet.c file.c keyboard.c maze.c menus.c player.c projectile.c sound.c vdu.c
+SRCS= alien.c asylum.c bullet.c file.c keyboard.c maze.c menus.c player.c projectile.c sound.c vdu.c i18n.c
 
 RESOURCES=data/Resources data/Ego data/Psyche data/Id data/Voices
 
@@ -55,7 +55,7 @@ ifeq ($(HOST),mingw)
 	OS_SOURCE=asylum_win.c
 	RM=del
 	EXE=.exe
-	LIBS=-lm -lmingw32 -lSDL2_mixer -lSDL2main -lSDL2 -lopengl32 -lglu32 -mwindows
+	LIBS=-lm -lmingw32 -lSDL2_mixer -lSDL2_ttf -lSDL2main -lSDL2 -lopengl32 -lglu32 -mwindows
 endif
 ifeq ($(HOST),generic)
 	INSTALLBIN=/usr/games/asylum

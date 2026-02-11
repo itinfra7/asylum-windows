@@ -145,6 +145,7 @@ typedef struct asylum_options
     char soundvol, musicvol, joyno;
     char idpermit;
     char initials[3];
+    char language;
 } asylum_options;
 typedef struct key_state
 {
@@ -397,6 +398,7 @@ void getzone();
 void choosecontrol();
 void choosekeys();
 void choosestick();
+void choose_language();
 void tunegame();
 void tunesound();
 void soundfillin();
@@ -470,6 +472,7 @@ int player_dead();
 void screensave();
 void getvars();
 void init_palette();
+void init_ttf();
 void vduread(asylum_options);
 int main(int argc, char** argv);
 void load_voices(int dumpmusic);
@@ -477,6 +480,7 @@ void init_sounds();
 void init_keyboard();
 void message_scroll(const char* a);
 void message(int x, int y, float xv, float yv, const char* a);
+const char* tr(const char* a);
 
 void startmessage();
 void causeexplo(alent* r11);

@@ -98,12 +98,15 @@ int options_menu(int gameon)
         message(32, 96, 0, 0, "1. Define Controls");
         message(32, 128, 0, 0, "2. Tune Game Options");
         message(88, 224, 0, 0, "Fire - Play");
-        if (gameon == 0) message(32, 160, 0, 0, "3. Choose Mental Zone");
+        if (gameon == 0) {
+            message(32, 160, 0, 0, "3. Choose Mental Zone");
+            message(32, 192, 0, 0, "4. LANGUAGE-BETA");
+        }
         else message(32, 160, 0, 0, "3. Save Position");
 // if (savedornot==1) message(32,192,0,0,"4. Save Settings");
         showtext();
         swi_blitz_wait(20); //
-        switch (readopt((gameon == 0) ? 3 : 3))
+        switch (readopt((gameon == 0) ? 4 : 3))
         {
         case -1: //optionexit:
             return 1;
@@ -116,6 +119,7 @@ int options_menu(int gameon)
             else
                 savegame();
             break;
+        case  4: if (gameon == 0) { choose_language(); dosaveconf(); } break;
 //case  4: if (savedornot==1) dosaveconf(); break;
         default: soundupdate(); return 0;
         }
@@ -158,6 +162,26 @@ void getzone()
         readopt(0);
     }
     else options.mentalzone = r0;
+}
+
+void choose_language()
+{
+    wipetexttab();
+    showchatscreen();
+    message(96, 48, 0, 0, "LANGUAGE-BETA");
+    message(64, 96, 0, 0, "1. ENGLISH");
+    message(64, 128, 0, 0, "2. DEUTSCH");
+    message(64, 160, 0, 0, "3. ESPAÑOL");
+    message(64, 192, 0, 0, "4. 한국어");
+    message(64, 224, 0, 0, "5. 简体中文");
+    showtext();
+    int r0 = readopt(5);
+    if (r0 == -1) return;
+    if (r0 == 1) options.language = 0;
+    if (r0 == 2) options.language = 1;
+    if (r0 == 3) options.language = 2;
+    if (r0 == 4) options.language = 3;
+    if (r0 == 5) options.language = 4;
 }
 
 void completedzone()

@@ -17,11 +17,13 @@
 
 #include "asylum.h"
 #include <math.h>
+#include <SDL2/SDL_ttf.h>
 
 extern fastspr_sprite charsadr[48];
 extern fastspr_sprite blockadr[256];
 extern board *boardadr;
 extern int boardwidth;
+extern asylum_options options;
 
 extern const char _bonuslow;
 #define _strengthmax (108<<8)
@@ -48,6 +50,11 @@ SDL_Renderer *Renderer = NULL;
 SDL_Texture *WindowTexture = NULL;
 SDL_GLContext Context = NULL;
 SDL_Surface* ArcScreen = NULL;
+static TTF_Font* UiFont = NULL;
+static TTF_Font* FontLatin = NULL;
+static TTF_Font* FontKr = NULL;
+static TTF_Font* FontSc = NULL;
+static int TtfReady = 0;
 //SDL_Surface* GameScreen;
 //SDL_Surface* ChatScreen;
 fastspr_sprite GameScreen;
@@ -59,7 +66,6 @@ SDL_Surface* greyness = NULL;
 SDL_Rect clip;
 
 #define _textno 32
-#define _textlen (20+60)
 #define _charwidth 16
 
 extern int framectr;
@@ -68,9 +74,250 @@ extern char frameinc;
 typedef struct textinfo
 {
     int count; int x; int y; int dx; int dy;
-    char text[60];
+    char use_ttf;
+    char text[256];
 } textinfo;
+#define _textlen (sizeof(textinfo))
 textinfo texttabofs[_textno];
+
+static int has_non_ascii(const char* s)
+{
+    for (const unsigned char* p = (const unsigned char*)s; *p; p++)
+    {
+        if (*p >= 0x80) return 1;
+    }
+    return 0;
+}
+
+static TTF_Font* open_font_candidate(const char* path, int ptsize)
+{
+    if (!path) return NULL;
+    TTF_Font* font = TTF_OpenFont(path, ptsize);
+    if (font) return font;
+    const char* ext = strrchr(path, '.');
+    if (ext && (_stricmp(ext, ".ttc") == 0 || _stricmp(ext, ".otc") == 0))
+    {
+        for (long i = 0; i < 4; i++)
+        {
+            font = TTF_OpenFontIndex(path, ptsize, i);
+            if (font) return font;
+        }
+    }
+    return NULL;
+}
+
+static void setup_font(TTF_Font* font)
+{
+    if (!font) return;
+    TTF_SetFontStyle(font, TTF_STYLE_NORMAL);
+    TTF_SetFontHinting(font, TTF_HINTING_NORMAL);
+}
+
+static TTF_Font* open_first_font(const char* const* candidates, unsigned int count, int ptsize)
+{
+    for (unsigned int i = 0; i < count; i++)
+    {
+        TTF_Font* font = open_font_candidate(candidates[i], ptsize);
+        if (font) return font;
+    }
+    return NULL;
+}
+
+void init_ttf()
+{
+    if (TtfReady) return;
+    if (TTF_Init() < 0)
+    {
+        fprintf(stderr, "TTF disabled: %s\n", TTF_GetError());
+        return;
+    }
+    TtfReady = 1;
+
+        const char* kr_candidates[] = {
+            "data/Resources/Fonts/NotoSansKR-Regular.ttf",
+            "data/Resources/Fonts/NotoSansCJKkr-Regular.otf",
+            "C:/Windows/Fonts/malgun.ttf",
+            "C:/Windows/Fonts/malgunbd.ttf"
+        };
+        const char* sc_candidates[] = {
+            "data/Resources/Fonts/NotoSansSC-Regular.otf",
+            "data/Resources/Fonts/NotoSansCJKsc-Regular.otf",
+            "C:/Windows/Fonts/msyh.ttc",
+            "C:/Windows/Fonts/msyhbd.ttc",
+            "C:/Windows/Fonts/simhei.ttf",
+            "C:/Windows/Fonts/simsun.ttc"
+        };
+        const char* latin_candidates[] = {
+            "C:/Windows/Fonts/arial.ttf",
+            "C:/Windows/Fonts/malgun.ttf"
+        };
+
+        FontKr = open_first_font(kr_candidates, sizeof(kr_candidates)/sizeof(kr_candidates[0]), 14);
+        FontSc = open_first_font(sc_candidates, sizeof(sc_candidates)/sizeof(sc_candidates[0]), 14);
+        FontLatin = open_first_font(latin_candidates, sizeof(latin_candidates)/sizeof(latin_candidates[0]), 14);
+
+        setup_font(FontKr);
+        setup_font(FontSc);
+        setup_font(FontLatin);
+
+        UiFont = FontLatin ? FontLatin : (FontKr ? FontKr : FontSc);
+
+        if (!UiFont)
+    {
+        fprintf(stderr, "TTF font not found; UTF-8 text will be unavailable\n");
+    }
+}
+
+    static int utf8_next(const char* s, uint32_t* cp)
+    {
+        unsigned char c = (unsigned char)s[0];
+        if (c < 0x80)
+        {
+            *cp = c;
+            return 1;
+        }
+        if ((c & 0xE0) == 0xC0)
+        {
+            *cp = ((uint32_t)(c & 0x1F) << 6) | (uint32_t)(s[1] & 0x3F);
+            return 2;
+        }
+        if ((c & 0xF0) == 0xE0)
+        {
+            *cp = ((uint32_t)(c & 0x0F) << 12) | ((uint32_t)(s[1] & 0x3F) << 6) | (uint32_t)(s[2] & 0x3F);
+            return 3;
+        }
+        if ((c & 0xF8) == 0xF0)
+        {
+            *cp = ((uint32_t)(c & 0x07) << 18) | ((uint32_t)(s[1] & 0x3F) << 12) | ((uint32_t)(s[2] & 0x3F) << 6) | (uint32_t)(s[3] & 0x3F);
+            return 4;
+        }
+        *cp = '?';
+        return 1;
+    }
+
+    static TTF_Font* pick_font_for_codepoint(uint32_t cp, TTF_Font* first, TTF_Font* second, TTF_Font* third)
+    {
+        if (first && TTF_GlyphIsProvided32(first, cp)) return first;
+        if (second && TTF_GlyphIsProvided32(second, cp)) return second;
+        if (third && TTF_GlyphIsProvided32(third, cp)) return third;
+        if (UiFont && TTF_GlyphIsProvided32(UiFont, cp)) return UiFont;
+        return first ? first : (second ? second : third);
+    }
+
+    static void draw_text_utf8_run(int x, int y, TTF_Font* font, const char* start, const char* end)
+    {
+        if (!font || start >= end) return;
+        char buf[256];
+        int len = (int)(end - start);
+        if (len >= (int)sizeof(buf)) len = (int)sizeof(buf) - 1;
+        memcpy(buf, start, len);
+        buf[len] = 0;
+
+        SDL_Color color = {0, 255, 0, 255};
+        SDL_Surface* surf = TTF_RenderUTF8_Solid(font, buf, color);
+        if (!surf) return;
+
+        int font_a = TTF_FontAscent(font);
+        int draw_y = y + (16 - font_a) - 10;
+        if (draw_y < 0) draw_y = 0;
+
+        if (!vduvar.opengl)
+        {
+            SDL_Rect dst = { x, draw_y, 0, 0 };
+            SDL_BlitSurface(surf, NULL, ArcScreen, &dst);
+            SDL_FreeSurface(surf);
+            return;
+        }
+
+        SDL_Surface* rgba = surf;
+        if (surf->format->format != SDL_PIXELFORMAT_RGBA32)
+        {
+            rgba = SDL_ConvertSurfaceFormat(surf, SDL_PIXELFORMAT_RGBA32, 0);
+        }
+
+        if (rgba)
+        {
+            GLuint tex;
+            glGenTextures(1, &tex);
+            glBindTexture(GL_TEXTURE_2D, tex);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, rgba->w, rgba->h, 0,
+                         GL_RGBA, GL_UNSIGNED_BYTE, rgba->pixels);
+
+            glEnable(GL_TEXTURE_2D);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glColor4f(1, 1, 1, 1);
+
+            float w = (float)rgba->w;
+            float h = (float)rgba->h;
+            glBegin(GL_TRIANGLE_STRIP);
+            glTexCoord2f(0.0f, 0.0f); glVertex3f((float)x, (float)draw_y, 0.0f);
+            glTexCoord2f(1.0f, 0.0f); glVertex3f((float)x + w, (float)draw_y, 0.0f);
+            glTexCoord2f(0.0f, 1.0f); glVertex3f((float)x, (float)draw_y + h, 0.0f);
+            glTexCoord2f(1.0f, 1.0f); glVertex3f((float)x + w, (float)draw_y + h, 0.0f);
+            glEnd();
+
+            glDeleteTextures(1, &tex);
+        }
+
+        if (rgba && rgba != surf) SDL_FreeSurface(rgba);
+        SDL_FreeSurface(surf);
+    }
+
+static void draw_text_utf8(int x, int y, const char* text)
+{
+        if (!TtfReady || (FontLatin == NULL && FontKr == NULL && FontSc == NULL) || text == NULL || *text == 0) return;
+
+        TTF_Font* pref1 = FontLatin;
+        TTF_Font* pref2 = FontKr;
+        TTF_Font* pref3 = FontSc;
+        if (options.language == 1)
+        {
+            pref1 = FontKr; pref2 = FontLatin; pref3 = FontSc;
+        }
+        else if (options.language == 4)
+        {
+            pref1 = FontSc; pref2 = FontLatin; pref3 = FontKr;
+        }
+
+        const char* p = text;
+        const char* run_start = p;
+        TTF_Font* run_font = NULL;
+        int draw_x = x;
+
+        while (*p)
+        {
+            uint32_t cp = 0;
+            int bytes = utf8_next(p, &cp);
+            TTF_Font* chosen = pick_font_for_codepoint(cp, pref1, pref2, pref3);
+            if (!run_font)
+            {
+                run_font = chosen;
+                run_start = p;
+            }
+            else if (chosen != run_font)
+            {
+                draw_text_utf8_run(draw_x, y, run_font, run_start, p);
+                int w = 0, h = 0;
+                char tmp[256];
+                int len = (int)(p - run_start);
+                if (len >= (int)sizeof(tmp)) len = (int)sizeof(tmp) - 1;
+                memcpy(tmp, run_start, len);
+                tmp[len] = 0;
+                if (TTF_SizeUTF8(run_font, tmp, &w, &h) == 0) draw_x += w;
+                run_font = chosen;
+                run_start = p;
+            }
+            p += bytes;
+        }
+
+        if (run_font && run_start != p)
+        {
+            draw_text_utf8_run(draw_x, y, run_font, run_start, p);
+        }
+}
 
 
 void switchbank()
@@ -204,8 +451,12 @@ void message_scroll(const char* a)
 void message(int x, int y, float xv, float yv, const char* a)
 {
     int time = 400;
-    char b[60];
+    char b[256];
     char* q = b;
+    const char* text = tr(a);
+    int use_ttf = (options.language != 0) || has_non_ascii(text);
+
+    if (text != NULL && strcmp(text, "#") == 0) use_ttf = 0;
 
     if (x > 1000)
     {
@@ -216,28 +467,38 @@ void message(int x, int y, float xv, float yv, const char* a)
         x -= 1000; time = 0x10000;
     }
 //int32_t z[5]={time,x<<8,y<<8,(int)(xv*256),(int)(yv*256)}; // might be non-integers
-    for (const char* p = a; *p != 0; p++, q++)
+    if (use_ttf)
     {
-        switch (*p)
+        for (const char* p = text; *p != 0 && (q - b) < (int)sizeof(b) - 1; p++, q++)
         {
-        case '-': *q = ';'; break;
-        case 164: *q = ':'; break;
-        case '\'': *q = '~'; break;
-        case '.': *q = '{'; break;
-        case ',': *q = '|'; break;
-        case '?': *q = '<'; break;
-        case '!': *q = '}'; break;
-        case '%': *q = '>'; break;
-        case 200: *q = '?'; break;
-        case 215: *q = '@'; break;
-        case '#': *q = 127; break;
-        default: *q = *p;
+            *q = *p;
         }
-        if (*q >= 96) *q -= 32;
-        if (*q == ' ') *q = 0xff;
-        else if ((*q&~1) != 16)
+    }
+    else
+    {
+        for (const char* p = text; *p != 0 && (q - b) < (int)sizeof(b) - 1; p++, q++)
         {
-            *q -= 47; if (*q > 55) exit(printf("Bad message character %c (%i)", *p, *p));
+            switch (*p)
+            {
+            case '-': *q = ';'; break;
+            case 164: *q = ':'; break;
+            case '\'': *q = '~'; break;
+            case '.': *q = '{'; break;
+            case ',': *q = '|'; break;
+            case '?': *q = '<'; break;
+            case '!': *q = '}'; break;
+            case '%': *q = '>'; break;
+            case 200: *q = '?'; break;
+            case 215: *q = '@'; break;
+            case '#': *q = 127; break;
+            default: *q = *p;
+            }
+            if (*q >= 96) *q -= 32;
+            if (*q == ' ') *q = 0xff;
+            else if ((*q&~1) != 16)
+            {
+                *q -= 47; if (*q > 55) exit(printf("Bad message character %c (%i)", *p, *p));
+            }
         }
     }
     *q = 0;
@@ -254,18 +515,15 @@ void message(int x, int y, float xv, float yv, const char* a)
        //messageproc:
         r11->count = time; r11->x = x<<8; r11->y = y<<8;
         r11->dx = (int)(xv*256); r11->dy = (int)(yv*256);
-        if (strlen(b) > 58) exit(printf("Bad string %s", b));
-        strncpy(r11->text, b, 60);
+        r11->use_ttf = use_ttf ? 1 : 0;
+        strncpy(r11->text, b, sizeof(r11->text) - 1);
+        r11->text[sizeof(r11->text) - 1] = 0;
     }
 }
 
 void wipetexttab()
 {
-    char* r10 = (char*)texttabofs;
-
-    for (int r3 = _textno*_textlen; r3 > 0; r3 -= 1)
-       //loopa5:
-        *(r10++) = 0;
+    memset(texttabofs, 0, sizeof(texttabofs));
 }
 
 void texthandler(int do_animation)
@@ -291,14 +549,33 @@ void texthandler(int do_animation)
 
         int XxX = r11->x>>8;
         int YyY = r11->y>>8;
-        for (char* r10 = r11->text; *r10 != 0; r10++)
+        if (r11->use_ttf)
         {
-           //loopa7:
-            if ((*r10-1) < 48)  // only plot known characters (charsadr is [48])
-                fspplot(charsadr, *r10-1, XxX, YyY);
-            XxX += 14;
-            if (*r10 <= 10) XxX += 2;
-            if (*r10 > 43) XxX -= 6;
+            const unsigned char* t = (const unsigned char*)r11->text;
+            if (t[0] == 16 || t[0] == 17)
+            {
+                fspplot(charsadr, t[0]-1, XxX, YyY);
+                XxX += 14;
+                if (t[0] <= 10) XxX += 2;
+                if (t[0] > 43) XxX -= 6;
+                draw_text_utf8(XxX, YyY, (const char*)(t + 1));
+            }
+            else
+            {
+                draw_text_utf8(XxX, YyY, r11->text);
+            }
+        }
+        else
+        {
+            for (char* r10 = r11->text; *r10 != 0; r10++)
+            {
+               //loopa7:
+                if ((*r10-1) < 48)  // only plot known characters (charsadr is [48])
+                    fspplot(charsadr, *r10-1, XxX, YyY);
+                XxX += 14;
+                if (*r10 <= 10) XxX += 2;
+                if (*r10 > 43) XxX -= 6;
+            }
         }
     }
    //textdone:;
